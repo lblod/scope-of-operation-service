@@ -20,3 +20,11 @@ Get the label that should be displayed if the location resource with the provide
 - `200 OK` The response body contains the requested label.
 - `404 No Content` No matching location resource or label was found.
 - `500 Internal Server Error` Something went wrong, check the service logs for more details.
+
+### `GET locations-in-scope/:locationUuid`
+Get the UUIDs of all location resources that are contained with the location resources identified by the provided UUID.
+
+#### Response
+- `200 OK` The response body contains a list of UUIDs of the contained location resources.
+- `404 No Content` No appropriate location resources were found.
+- `500 Internal Server Error` Something went wrong, check the service logs for more details.

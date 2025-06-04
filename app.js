@@ -4,7 +4,11 @@ import {
   getLocationDetails,
   getLocationUrisForUuids,
 } from "./lib/queries";
-import { getSortedLabels, requiresAggregateLabel } from "./lib/util";
+import {
+  getSortedLabels,
+  LOCATION_LEVELS,
+  requiresAggregateLabel,
+} from "./lib/util";
 
 /** @import { LocationDetails } from "./lib/queries"; */
 
@@ -37,6 +41,35 @@ app.get("/label-for-scope/:locationUuid", async function (req, res) {
     return res.status(statusCode).json(labelForScope);
   } catch (e) {
     console.log("Something went wrong while retrieving the display label", e);
+    return res.status(500).send();
+  }
+});
+
+app.get("/locations-in-scope/:locationUuid", async function (req, res) {
+  try {
+    const locationUuid = req.params.locationUuid;
+    const location = await getLocationForUuid(locationUuid);
+
+    if (!location) {
+      return res.status(404).send();
+    }
+
+    let locations = [];
+    // TODO: Should also consider districts, but they are ignored in the MVP
+    if (location.level === LOCATION_LEVELS.municipality) {
+      locations.push(location.uuid);
+    } else {
+      const containedLocations = await getContainedLocations(location.uri);
+      const containedLocationUuids = containedLocations?.flatMap(
+        (location) => location.uuid,
+      );
+      locations.push(...containedLocationUuids);
+    }
+
+    const statusCode = locations.length > 0 ? 200 : 404;
+    return res.status(statusCode).json(locations);
+  } catch (e) {
+    console.log("Something went wrong while retrieving the locations", e);
     return res.status(500).send();
   }
 });
