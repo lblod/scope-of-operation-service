@@ -6,6 +6,7 @@ import {
 } from "./lib/queries";
 import {
   getSortedLabels,
+  LOCATION_LEVELS,
   requiresAggregateLabel,
 } from "./lib/util";
 
@@ -42,4 +43,33 @@ app.get("/label-for-scope/:organizationUuid", async function (req, res) {
   }
 });
 
+app.get("/locations-in-scope/:organizationUuid", async function (req, res) {
+  try {
+    const organizationUuid = req.params.organizationUuid;
+    const organization = await getOrganizationDetails(organizationUuid);
+
+    let locations = [];
+    if (organization && organization.location) {
+      const location = (await getLocationDetails(organization.location))[0];
+
+      // TODO: Should also consider districts, but they are ignored in the MVP
+      if (location.level === LOCATION_LEVELS.municipality) {
+        locations.push(location.uuid);
+      } else {
+        const containedLocations = await getContainedLocations(
+          organization.location,
+        );
+        const containedLocationUuids = containedLocations?.flatMap(
+          (location) => location.uuid,
+        );
+        locations.push(...containedLocationUuids);
+      }
+    }
+    const statusCode = locations.length > 0 ? 200 : 404;
+    return res.status(statusCode).json(locations);
+  } catch (e) {
+    console.log("Something went wrong while retrieving the locations", e);
+    return res.status(500).send();
+  }
+});
 app.use(errorHandler);
