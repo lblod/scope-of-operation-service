@@ -31,7 +31,7 @@ Get the UUIDs of all location resources in the scope of operation for the organi
 
 ### `POST scope-for-locations`
 Create a location resource that contains exactly the locations specified in the body. If a suitable location resource already exists that will be reused.
-
+-
 #### Body
 The body of the request should contain a list of the UUIDs for the location resources to be contained.
 
@@ -45,22 +45,4 @@ The body of the request should contain a list of the UUIDs for the location reso
 
 #### Response
 - `201 Created` An appropriate resource location was created and its UUID is in the body of the response.
-- `500 Internal Server Error` Something went wrong, check the service logs for more details.
-
-### `POST set-locations-as-scope/:organizationUuid`
-Set the scope of operation for the organization to a location resource that exactly contains the locations specified in the request body. If necessary, a new location resource will be created.
-
-#### Body
-The body of the request should contain a list of the UUIDs for the location resources to be contained.
-
-```json
-{
-    data: {
-        locations: ["UUID1", "UUID2", ...]
-    }
-}
-```
-
-#### Response
-- `201 Created` The necessary links and resources were created in the triplestore. The response body contains the UUID of the location resource linked as (new) scope of operation to the organization.
 - `500 Internal Server Error` Something went wrong, check the service logs for more details.

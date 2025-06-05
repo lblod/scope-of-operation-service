@@ -7,7 +7,6 @@ import {
   getOrganizationDetails,
   insertLocationResource,
   linkContainedLocations,
-  linkOrganizationToLocation,
 } from "./lib/queries";
 import {
   getSortedLabels,
@@ -100,45 +99,6 @@ app.post("/scope-for-locations", async function (req, res) {
     return res.status(500).send();
   }
 });
-
-app.post(
-  "/set-locations-as-scope/:organizationUuid",
-  async function (req, res) {
-    try {
-      const organizationUuid = req.params.organizationUuid;
-      const organization = await getOrganizationDetails(organizationUuid);
-
-      // NOTE (09/05/2025): Assume locations is a list of UUIDS in the body
-      // {data: {locations: ["UUID1", "UUID2", ...]}}
-      const locationUuids = req.body.data.locations;
-      if (!locationUuids.length) {
-        throw new Error("No UUIDs provided in the request body.");
-      }
-
-      const locationDetails = await transformUuidsToLocationDetails(
-        ...locationUuids,
-      );
-      if (locationDetails.length != locationUuids.length) {
-        throw new Error("Not all provided UUIDs identify a known location.");
-      }
-
-      if (organization) {
-        const newLocation = await getContainingLocation(...locationDetails);
-
-        await linkOrganizationToLocation(
-          organization.uri,
-          newLocation.uri,
-          organization.location,
-        );
-
-        return res.status(201).json(newLocation.uuid);
-      }
-    } catch (e) {
-      console.log("Something went wrong while calling /create-location", e);
-      return res.status(500).send();
-    }
-  },
-);
 
 /**
  * Retrieve the details for a the location resources with the given uuids.
