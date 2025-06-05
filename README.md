@@ -13,19 +13,19 @@ scope-of-operation:
 ```
 
 ## API
-### `GET /label-for-scope/:organizationUuid`
-Get the label that should be displayed for the scope of operation for an organisation with the provided UUID.
+### `GET /label-for-scope/:locationUuid`
+Get the label that should be displayed if the location with the provided UUID is use as an organisation's scope of operation.
 
 #### Response
 - `200 OK` The response body contains the requested label.
-- `404 Not Found` No label was found.
+- `404 Not Content` No matching location resource or label was found.
 - `500 Internal Server Error` Something went wrong, check the service logs for more details.
 
-### `GET locations-in-scope/:organizationUuid`
-Get the UUIDs of all location resources in the scope of operation for the organisation with the provided UUID.
+### `GET locations-in-scope/:locationUuid`
+Get the UUIDs of all location resources that are contained with the location identified by the provided UUID.
 
 #### Response
-- `200 OK` The response body contains a list of UUIDs identifying the contained locations.
+- `200 OK` The response body contains a list of UUIDs of the contained locations.
 - `404 No Content` No appropriate location resources were found.
 - `500 Internal Server Error` Something went wrong, check the service logs for more details.
 

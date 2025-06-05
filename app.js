@@ -4,7 +4,6 @@ import {
   getLocationDetails,
   getLocationUrisForUuids,
   getMatchingLocation,
-  getOrganizationDetails,
   insertLocationResource,
   linkContainedLocations,
 } from "./lib/queries";
@@ -14,61 +13,60 @@ import {
   requiresAggregateLabel,
 } from "./lib/util";
 
-app.get("/", function (req, res) {
+app.get("/", function (_req, res) {
   res.send("Hello from scope-of-operation-service!");
 });
 
-app.get("/label-for-scope/:organizationUuid", async function (req, res) {
+app.get("/label-for-scope/:locationUuid", async function (req, res) {
   try {
-    const organizationUuid = req.params.organizationUuid;
-    const organization = await getOrganizationDetails(organizationUuid);
+    const locationUuid = req.params.locationUuid;
+    const location = await getLocationForUuid(locationUuid);
 
-    let scopeLabel;
-    if (organization && organization.location) {
-      const location = (await getLocationDetails(organization.location))[0];
-
-      if (requiresAggregateLabel(location)) {
-        const containedlocations = await getContainedLocations(location.uri);
-
-        scopeLabel =
-          containedlocations.length > 0
-            ? getSortedLabels(...containedlocations)
-            : location.label;
-      } else {
-        scopeLabel = location.label;
-      }
+    if (!location) {
+      return res.status(404).send();
     }
 
-    const statusCode = scopeLabel ? 200 : 404;
-    return res.status(statusCode).json(scopeLabel);
+    let labelForScope;
+    if (requiresAggregateLabel(location)) {
+      const containedlocations = await getContainedLocations(location.uri);
+
+      labelForScope =
+        containedlocations.length > 0
+          ? getSortedLabels(...containedlocations)
+          : location.label;
+    } else {
+      labelForScope = location.label;
+    }
+
+    const statusCode = labelForScope ? 200 : 404;
+    return res.status(statusCode).json(labelForScope);
   } catch (e) {
     console.log("Something went wrong while retrieving the display label", e);
     return res.status(500).send();
   }
 });
 
-app.get("/locations-in-scope/:organizationUuid", async function (req, res) {
+app.get("/locations-in-scope/:locationUuid", async function (req, res) {
   try {
-    const organizationUuid = req.params.organizationUuid;
-    const organization = await getOrganizationDetails(organizationUuid);
+    const locationUuid = req.params.locationUuid;
+    const location = await getLocationForUuid(locationUuid);
+
+    if (!location) {
+      return res.status(404).send();
+    }
 
     let locations = [];
-    if (organization && organization.location) {
-      const location = (await getLocationDetails(organization.location))[0];
-
-      // TODO: Should also consider districts, but they are ignored in the MVP
-      if (location.level === LOCATION_LEVELS.municipality) {
-        locations.push(location.uuid);
-      } else {
-        const containedLocations = await getContainedLocations(
-          organization.location,
-        );
-        const containedLocationUuids = containedLocations?.flatMap(
-          (location) => location.uuid,
-        );
-        locations.push(...containedLocationUuids);
-      }
+    // TODO: Should also consider districts, but they are ignored in the MVP
+    if (location.level === LOCATION_LEVELS.municipality) {
+      locations.push(location.uuid);
+    } else {
+      const containedLocations = await getContainedLocations(location.uri);
+      const containedLocationUuids = containedLocations?.flatMap(
+        (location) => location.uuid,
+      );
+      locations.push(...containedLocationUuids);
     }
+
     const statusCode = locations.length > 0 ? 200 : 404;
     return res.status(statusCode).json(locations);
   } catch (e) {
@@ -99,6 +97,12 @@ app.post("/scope-for-locations", async function (req, res) {
     return res.status(500).send();
   }
 });
+
+async function getLocationForUuid(uuid) {
+  const location = await transformUuidsToLocationDetails(uuid);
+
+  return location && location.length > 0 ? location[0] : null;
+}
 
 /**
  * Retrieve the details for a the location resources with the given uuids.
