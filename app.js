@@ -78,6 +78,29 @@ app.get("/locations-in-scope/:organizationUuid", async function (req, res) {
   }
 });
 
+app.post("/scope-for-locations", async function (req, res) {
+  try {
+    const locationUuids = req.body?.data?.locations;
+    if (!locationUuids?.length || locationUuids.length === 0) {
+      throw new Error("No UUIDs provided in the request body.");
+    }
+
+    const locationDetails = await transformUuidsToLocationDetails(
+      ...locationUuids,
+    );
+    if (locationDetails.length != locationUuids.length) {
+      throw new Error("Not all provided UUIDs identify a known location.");
+    }
+
+    const scope = await getContainingLocation(...locationDetails);
+
+    return res.status(201).json(scope.uuid);
+  } catch (e) {
+    console.log("Something went wrong while retrieving the scope", e);
+    return res.status(500).send();
+  }
+});
+
 app.post(
   "/set-locations-as-scope/:organizationUuid",
   async function (req, res) {
