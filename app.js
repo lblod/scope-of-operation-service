@@ -13,6 +13,8 @@ import {
   requiresAggregateLabel,
 } from "./lib/util";
 
+/** @import {LocationDetails} from "./lib/queries" */
+
 app.get("/", function (_req, res) {
   res.send("Hello from scope-of-operation-service!");
 });
@@ -108,10 +110,9 @@ async function getLocationForUuid(uuid) {
  * Retrieve the details for a the location resources with the given uuids.
  * @param {...string} uuids - The UUIDs for which to retrieve the location
  *    details.
- * @returns {Promise<import("./lib/queries").LocationDetails[] | null>} The
- *    details for each location resource for a UUID was provided. Null if none
- *    of the provided UUIDs identify a location resource or no UUID was
- *    provided.
+ * @returns {Promise<LocationDetails[] | null>} The details for each location
+ *    resource for a UUID was provided. Null if none of the provided UUIDs
+ *    identify a location resource or no UUID was provided.
  */
 async function transformUuidsToLocationDetails(...uuids) {
   if (uuids.length) {
@@ -130,10 +131,10 @@ async function transformUuidsToLocationDetails(...uuids) {
 /**
  * Retrieve the UUID of the location that exactly matches the provided contained
  * locations.  If necessary, a new location resource will be created.
- * @param {...import("./lib/queries").LocationDetails} containedLocations - The
- *     UUIDs of the locations that should be contained.
- * @returns {Promise<import("./lib/queries").LocationDetails>} The details of
- *     the location that exactly matches the specified locations.
+ * @param {...LocationDetails} containedLocations - The UUIDs of the locations
+ *     that should be contained.
+ * @returns {Promise<LocationDetails | null>} The details of the location that
+ *     exactly matches the specified locations.
  */
 async function getContainingLocation(...containedLocations) {
   const containingLocation =
@@ -150,10 +151,10 @@ async function getContainingLocation(...containedLocations) {
 
 /**
  * Create a new location resource that contains the provided locations.
- * @param {...import("./lib/queries").LocationDetails} containedLocations - The
- *     locations that should be contained within the newly created location.
- * @returns {Promise<import("./lib/queries").LocationDetails>} The details of
- *     the newly created location resource.
+ * @param {...LocationDetails} containedLocations - The locations that should be
+ *     contained within the newly created location.
+ * @returns {Promise<LocationDetails>} The details of the newly created location
+ *     resource.
  */
 async function createNewLocation(...containedLocations) {
   const label = getSortedLabels(...containedLocations);
