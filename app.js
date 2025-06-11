@@ -11,8 +11,8 @@ import {
 import {
   containSameElements,
   getSortedLabels,
-  LOCATION_LEVELS,
   requiresAggregateLabel,
+  LOCATION_LEVELS,
 } from "./lib/util";
 
 /** @import {LocationDetails} from "./lib/queries" */
@@ -107,6 +107,13 @@ app.post("/scope-for-locations", async function (req, res) {
   }
 });
 
+/**
+ * Get the location details for the location resource with the given UUID.
+ * @param {string} uuid - The UUID to search for.
+ * @returns {Promise<LocationDetails | undefined>} The details for the
+ *     identified location resource, undefined if the provided UUID does not
+ *     identify a location resource.
+ */
 async function getLocationForUuid(uuid) {
   const location = await transformUuidsToLocationDetails(uuid);
 
