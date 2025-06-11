@@ -3,11 +3,13 @@ import {
   getContainedLocations,
   getLocationDetails,
   getLocationUrisForUuids,
-  getMatchingLocation,
+  getMatchingLocationCandidates,
   insertLocationResource,
   linkContainedLocations,
+  listContainedLocations,
 } from "./lib/queries";
 import {
+  containSameElements,
   getSortedLabels,
   LOCATION_LEVELS,
   requiresAggregateLabel,
@@ -91,9 +93,14 @@ app.post("/scope-for-locations", async function (req, res) {
       throw new Error("Not all provided UUIDs identify a known location.");
     }
 
-    const scope = await getContainingLocation(...locationDetails);
+    let scope = await getContainingLocation(...locationDetails);
 
-    return res.status(201).json(scope.uuid);
+    if (scope) {
+      return res.status(200).json(scope.uuid);
+    } else {
+      scope = await createNewLocation(...locationDetails);
+      return res.status(201).json(scope.uuid);
+    }
   } catch (e) {
     console.log("Something went wrong while retrieving the scope", e);
     return res.status(500).send();
@@ -138,21 +145,33 @@ async function transformUuidsToLocationDetails(...uuids) {
 /**
  * Retrieve the UUID of the location that exactly matches the provided contained
  * locations.  If necessary, a new location resource will be created.
- * @param {...import("./lib/queries").LocationDetails} containedLocations - The
- *     UUIDs of the locations that should be contained.
- * @returns {Promise<import("./lib/queries").LocationDetails>} The details of
- *     the location that exactly matches the specified locations.
+ * @param {...LocationDetails} containedLocations - The UUIDs of the locations
+ *     that should be contained.
+ * @returns {Promise<LocationDetails | null>} The details of the location that
+ *     exactly matches the specified locations.
  */
 async function getContainingLocation(...containedLocations) {
-  const containingLocation =
-    containedLocations.length === 1
-      ? containedLocations[0]
-      : await getMatchingLocation(...containedLocations);
+  if (containedLocations.length === 1) {
+    return containedLocations[0];
+  }
 
-  if (containingLocation) {
-    return containingLocation;
-  } else {
-    return await createNewLocation(...containedLocations);
+  const locationCandidates = await getMatchingLocationCandidates(
+    containedLocations.length,
+  );
+
+  if (locationCandidates) {
+    const containedLocationUris = containedLocations.flatMap((loc) => loc.uri);
+
+    for (const candidate of locationCandidates) {
+      const actuallyContainedLocations =
+        await listContainedLocations(candidate);
+
+      if (
+        containSameElements(containedLocationUris, actuallyContainedLocations)
+      ) {
+        return (await getLocationDetails(candidate))[0];
+      }
+    }
   }
 }
 
