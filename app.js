@@ -3,6 +3,9 @@ import {
   getContainedLocations,
   getLocationDetails,
   getLocationUrisForUuids,
+  getMatchingLocation,
+  insertLocationResource,
+  linkContainedLocations,
 } from "./lib/queries";
 import {
   getSortedLabels,
@@ -74,6 +77,29 @@ app.get("/locations-in-scope/:locationUuid", async function (req, res) {
   }
 });
 
+app.post("/scope-for-locations", async function (req, res) {
+  try {
+    const locationUuids = req.body?.data?.locations;
+    if (!locationUuids?.length || locationUuids.length === 0) {
+      throw new Error("No UUIDs provided in the request body.");
+    }
+
+    const locationDetails = await transformUuidsToLocationDetails(
+      ...locationUuids,
+    );
+    if (locationDetails.length != locationUuids.length) {
+      throw new Error("Not all provided UUIDs identify a known location.");
+    }
+
+    const scope = await getContainingLocation(...locationDetails);
+
+    return res.status(201).json(scope.uuid);
+  } catch (e) {
+    console.log("Something went wrong while retrieving the scope", e);
+    return res.status(500).send();
+  }
+});
+
 /**
  * Get the location details for the location resource with the given UUID.
  * @param {string} uuid - The UUID to search for.
@@ -104,7 +130,53 @@ async function transformUuidsToLocationDetails(...uuids) {
     // simply concatenate a prefix to the UUID to obtain the URI.
     const uris = await getLocationUrisForUuids(...uuids);
     return await getLocationDetails(...uris);
+  } else {
+    return null;
   }
+}
+
+/**
+ * Retrieve the UUID of the location that exactly matches the provided contained
+ * locations.  If necessary, a new location resource will be created.
+ * @param {...import("./lib/queries").LocationDetails} containedLocations - The
+ *     UUIDs of the locations that should be contained.
+ * @returns {Promise<import("./lib/queries").LocationDetails>} The details of
+ *     the location that exactly matches the specified locations.
+ */
+async function getContainingLocation(...containedLocations) {
+  const containingLocation =
+    containedLocations.length === 1
+      ? containedLocations[0]
+      : await getMatchingLocation(...containedLocations);
+
+  if (containingLocation) {
+    return containingLocation;
+  } else {
+    return await createNewLocation(...containedLocations);
+  }
+}
+
+/**
+ * Create a new location resource that contains the provided locations.
+ * @param {...LocationDetails} containedLocations - The locations that should be
+ *     contained within the newly created location.
+ * @returns {Promise<LocationDetails>} The details of the newly created location
+ *     resource.
+ */
+async function createNewLocation(...containedLocations) {
+  const label = getSortedLabels(...containedLocations);
+
+  const newLocation = await insertLocationResource(
+    label,
+    LOCATION_LEVELS.composedScope,
+  );
+
+  await linkContainedLocations(
+    newLocation.uri,
+    ...containedLocations.flatMap((location) => location.uri),
+  );
+
+  return newLocation;
 }
 
 app.use(errorHandler);

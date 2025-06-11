@@ -28,3 +28,22 @@ Get the UUIDs of all location resources that are contained with the location res
 - `200 OK` The response body contains a list of UUIDs of the contained location resources.
 - `404 No Content` No appropriate location resources were found.
 - `500 Internal Server Error` Something went wrong, check the service logs for more details.
+
+### `POST scope-for-locations`
+Create a location resource that contains exactly the locations specified in the body. If a suitable location resource already exists that will be reused instead of creating a new one.
+
+#### Body
+The body of the request should contain a list of the UUIDs for the location resources to be contained.
+
+```json
+{
+    data: {
+        locations: ["UUID1", "UUID2", ...]
+    }
+}
+```
+
+#### Response
+- `200 OK` An appropriate location resources already exists, and its UUID is in the body of the response.
+- `201 Created` An appropriate location resource was created, and its UUID is in the body of the response.
+- `500 Internal Server Error` Something went wrong, check the service logs for more details.
