@@ -110,16 +110,16 @@ app.post("/scope-for-locations", async function (req, res) {
 async function getLocationForUuid(uuid) {
   const location = await transformUuidsToLocationDetails(uuid);
 
-  return location && location.length > 0 ? location[0] : null;
+  return location && location.length > 0 ? location[0] : undefined;
 }
 
 /**
  * Retrieve the details for a the location resources with the given uuids.
  * @param {...string} uuids - The UUIDs for which to retrieve the location
  *    details.
- * @returns {Promise<LocationDetails[] | null>} The details for each location
- *    resource for a UUID was provided. Null if none of the provided UUIDs
- *    identify a location resource or no UUID was provided.
+ * @returns {Promise<LocationDetails[] | undefined>} The details for each
+ *    location resource for a UUID was provided. Undefined if no UUID was
+ *    provided or none of the provided ones identify a location resource.
  */
 async function transformUuidsToLocationDetails(...uuids) {
   if (uuids.length) {
@@ -130,8 +130,6 @@ async function transformUuidsToLocationDetails(...uuids) {
     // simply concatenate a prefix to the UUID to obtain the URI.
     const uris = await getLocationUrisForUuids(...uuids);
     return await getLocationDetails(...uris);
-  } else {
-    return null;
   }
 }
 
