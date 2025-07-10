@@ -1,4 +1,9 @@
 {
+  "name": "scope-of-operation-service",
+  "version": "0.0.1",
+  "description": "Manages scope of operation for administrative units",
+  "author": "redpencil.io",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "lint": "eslint ."
