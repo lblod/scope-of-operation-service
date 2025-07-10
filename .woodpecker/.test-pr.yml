@@ -1,0 +1,15 @@
+steps:
+  install:
+    image: node:20
+    commands:
+      - npm i
+  lint:
+    image: node:20
+    commands:
+      - npm run lint
+  test:
+    image: node:20
+    commands:
+      - npm test
+when:
+  - event: pull_request
