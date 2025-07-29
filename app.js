@@ -11,6 +11,7 @@ import {
 import {
   containSameElements,
   getSortedLabels,
+  isUndividableLocation,
   LOCATION_LEVELS,
   requiresAggregateLabel,
 } from "./lib/util";
@@ -60,8 +61,7 @@ app.get("/locations-in-scope/:locationUuid", async function (req, res) {
     }
 
     let locations = [];
-    // TODO: Should also consider districts, but they are ignored in the MVP
-    if (location.level === LOCATION_LEVELS.municipality) {
+    if (isUndividableLocation(location)) {
       locations.push(location.uuid);
     } else {
       const containedLocations = await getContainedLocations(location.uri);
