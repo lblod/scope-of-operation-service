@@ -4,6 +4,7 @@ import {
   getLocationDetails,
   getLocationUrisForUuids,
   getMatchingLocationCandidates,
+  getReferentieregiosForScope,
   insertLocationResource,
   linkContainedLocations,
   listContainedLocations,
@@ -75,6 +76,28 @@ app.get("/locations-in-scope/:locationUuid", async function (req, res) {
     return res.status(statusCode).json(locations);
   } catch (e) {
     console.log("Something went wrong while retrieving the locations", e);
+    return res.status(500).send();
+  }
+});
+
+app.get("/referentieregios-in-scope/:locationUuid", async function (req, res) {
+  try {
+    const locationUuid = req.params.locationUuid;
+    const location = await getLocationForUuid(locationUuid);
+
+    if (!location) {
+      return res.status(404).send();
+    }
+
+    const referentieregios = await getReferentieregiosForScope(location.uri);
+
+    const statusCode = referentieregios.length > 0 ? 200 : 404;
+    return res.status(statusCode).json(referentieregios);
+  } catch (e) {
+    console.log(
+      "Something went wrong while retrieving the reference regions",
+      e,
+    );
     return res.status(500).send();
   }
 });

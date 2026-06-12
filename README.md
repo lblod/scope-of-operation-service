@@ -29,6 +29,14 @@ Get the UUIDs of all location resources that are contained with the location res
 - `404 No Content` No appropriate location resources were found.
 - `500 Internal Server Error` Something went wrong, check the service logs for more details.
 
+### `GET referentieregios-in-scope/:locationUuid`
+Get the reference regions (*nl. referentieregio's*) covered by the location resource with the provided UUID. The regions are derived from the municipalities the location consists of, so any shape of scope is supported: a single municipality, a district, a province, or a composed scope. A scope can cover multiple reference regions.
+
+#### Response
+- `200 OK` The response body contains a list of the covered reference regions, each with their `uri`, `uuid` and `label`.
+- `404 No Content` No matching location resource or no covering reference regions were found.
+- `500 Internal Server Error` Something went wrong, check the service logs for more details.
+
 ### `POST scope-for-locations`
 Create a location resource that contains exactly the locations specified in the body. If a suitable location resource already exists that will be reused instead of creating a new one.
 
